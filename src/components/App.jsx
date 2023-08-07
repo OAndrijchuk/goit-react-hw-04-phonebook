@@ -1,81 +1,67 @@
-import { Component } from "react"
-import { Section } from "./Section/Section"
-import { SimpleForm } from "./Form/SimpleForm";
-import { nanoid } from 'nanoid'
-import { ContactsList } from "./ContactsList/ContactsList";
-import { Filter } from "./Filter/Filter";
-import { Container, GeneralTitle } from "./App.styled";
+import React, { useEffect, useState } from 'react';
+import { Section } from './Section/Section';
+import { SimpleForm } from './Form/SimpleForm';
+import { nanoid } from 'nanoid';
+import { ContactsList } from './ContactsList/ContactsList';
+import { Filter } from './Filter/Filter';
+import { Container, GeneralTitle } from './App.styled';
 
-export class App extends Component{
-  state = {
-  contacts: [
-    {id: 'id-1', name: 'Rosie Simpson', number: '459-12-56'},
-    {id: 'id-2', name: 'Hermione Kline', number: '443-89-12'},
-    {id: 'id-3', name: 'Eden Clements', number: '645-17-79'},
-    {id: 'id-4', name: 'Annie Copeland', number: '227-91-26'},
-  ],
-  filter: '',
-  }
+const initialContacts = [
+  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+];
 
-  componentDidMount() {
-    const contacts = JSON.parse(localStorage.getItem('PhoneBookContacts'));
-    if (contacts) {
-      this.setState({contacts})
+export const App = () => {
+  const [contacts, setContacts] = useState(initialContacts);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    const localContacts = JSON.parse(localStorage.getItem('PhoneBookContacts'));
+    if (localContacts) {
+      setContacts(localContacts);
     }
-  }
+  }, []);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('PhoneBookContacts', JSON.stringify(this.state.contacts))
-    }
-     
-  }
-  
-  onAddContact = (user) => {
-   if (this.state.contacts.find(el => el.name === user.name)) {
+  useEffect(() => {
+    localStorage.setItem('PhoneBookContacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const onAddContact = user => {
+    if (contacts.find(el => el.name === user.name)) {
       alert(`${user.name} is already in contacts`);
       return;
     }
+    setContacts(prev => [...prev, { ...user, id: nanoid() }]);
+  };
 
-    this.setState((prevState)=>({
-      contacts: [
-        ...prevState.contacts,
-        {
-          ...user,
-          id: nanoid()
-        },
-      ],
-    })) 
-  }
+  const onCheangedFilter = ({ target: { value } }) => {
+    setFilter(value);
+  };
 
-  onCheangedFilter = ({ target:{name, value}}) => {
-    this.setState({[name]: value, })
-  }
-  
-  removeContact = (id) => {
-    this.setState((preState) => ({ contacts: preState.contacts.filter(contact => contact.id !== id) }))
-  }
+  const removeContact = id => {
+    setContacts(prev => prev.filter(contact => contact.id !== id));
+  };
 
-  render() {
-    const{filter, contacts}=this.state
-    return (
-      <Container>
-        <GeneralTitle>Phonebook</GeneralTitle>
-        <Section >
-          <SimpleForm onAddContact={this.onAddContact}/>
-        </Section>
+  return (
+    <Container>
+      <GeneralTitle>Phonebook</GeneralTitle>
+      <Section>
+        <SimpleForm onAddContact={onAddContact} />
+      </Section>
 
-        <Section title="Find contacts by name">
-          <Filter onCheangedFilter={this.onCheangedFilter} filterValue={filter} />
-        </Section>
+      <Section title="Find contacts by name">
+        <Filter onCheangedFilter={onCheangedFilter} filterValue={filter} />
+      </Section>
 
-        <Section title="Contacts">
-          <ContactsList
-            contacts={contacts}
-            filter={filter}
-            removeContact={this.removeContact} />
-        </Section>
-        </Container>
-    );}
-  
+      <Section title="Contacts">
+        <ContactsList
+          contacts={contacts}
+          filter={filter}
+          removeContact={removeContact}
+        />
+      </Section>
+    </Container>
+  );
 };
